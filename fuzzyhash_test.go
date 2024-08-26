@@ -1,6 +1,7 @@
 package fuzzyhash
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -23,9 +24,9 @@ func TestHash(t *testing.T) {
 
 	got3 := Hash([]byte("6865206b6e656c7420746f207468652067726f756e6420616e642070756c6c6564206f757420612072696e6720616e642073616964"), 1)
 	got4 := Hash([]byte("6865206b6e656c7420746f2074686520666c6f6f7220616e642070756c6c6564206f757420612072696e6720616e642073616964"), 1)
-	result2 := Equal(got3, got4)
+	result2 := !Equal(got3, got4)
 	t.Log(result2)
-	if result2 {
+	if !result2 {
 		t.Error("result 2 is wrong.")
 		t.Fail()
 	}
@@ -41,9 +42,9 @@ func TestHash(t *testing.T) {
 
 	got7 := Hash([]byte("elephants like horses"), 1)
 	got8 := Hash([]byte("elephants are horses"), 1)
-	result4 := Equal(got7, got8)
+	result4 := !Equal(got7, got8)
 	t.Log(result4)
-	if result4 {
+	if !result4 {
 		t.Error("result 4 is wrong.")
 		t.Fail()
 	}
@@ -53,7 +54,30 @@ func TestHash(t *testing.T) {
 	result5 := Equal(got9, got10)
 	t.Log(result5)
 	if !result5 {
-		t.Error("result 4 is wrong.")
+		t.Error("result 5 is wrong.")
+		t.Fail()
+	}
+}
+
+func TestMarshal(t *testing.T) {
+	got11 := Hash([]byte("elephants are like horses"), 1).MarshalString()
+	result6 := got11 == "d7697570462f7562b83e81258de0f1e41832e98072e44c36ec8efec46786e24e:12"
+	t.Log(result6)
+	if !result6 {
+		t.Error("result 6 is wrong.")
+		t.Fail()
+	}
+}
+
+func TestUnmarshal(t *testing.T) {
+	got12, err := UnmarshalString("d7697570462f7562b83e81258de0f1e41832e98072e44c36ec8efec46786e24e:12")
+	if err != nil {
+		t.Errorf("unexpected error getting result 7: %s", err.Error())
+	}
+	result7 := reflect.DeepEqual(*got12, *Hash([]byte("elephants are like horses"), 1))
+	t.Log(result7)
+	if !result7 {
+		t.Error("result 7 is wrong.")
 		t.Fail()
 	}
 }

@@ -3,8 +3,11 @@ package fuzzyhash
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"math"
 	"slices"
+	"strconv"
+	"strings"
 )
 
 type FuzzyHash struct {
@@ -42,6 +45,34 @@ func Hash(k []byte, t float64) *FuzzyHash {
 
 func (f FuzzyHash) String() string {
 	return hex.EncodeToString(f.C)
+}
+
+func (f FuzzyHash) MarshalString() string {
+	c := hex.EncodeToString(f.C)
+	return fmt.Sprintf("%s:%d", c, f.T)
+}
+
+func UnmarshalString(fh string) (*FuzzyHash, error) {
+	nf := new(FuzzyHash)
+	parts := strings.Split(fh, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("string cannot be made into fuzzyhash: its formatting is invalid.")
+	}
+	ce := parts[0]
+	ts := parts[1]
+
+	c, err := hex.DecodeString(ce)
+	if err != nil {
+		return nil, fmt.Errorf("string cannot be made into fuzzyhash: specified c value is not hex encoded")
+	}
+	nf.C = c
+
+	t, err := strconv.Atoi(ts)
+	if err != nil {
+		return nil, fmt.Errorf("string cannot be made into fuzzyhash: specified t value is not an integer")
+	}
+	nf.T = t
+	return nf, nil
 }
 
 func Equal(f1 *FuzzyHash, f2 *FuzzyHash) bool {
