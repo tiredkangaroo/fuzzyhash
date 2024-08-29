@@ -22,8 +22,8 @@ func TestHash(t *testing.T) {
 		t.Fail()
 	}
 
-	got3 := Hash([]byte("6865206b6e656c7420746f207468652067726f756e6420616e642070756c6c6564206f757420612072696e6720616e642073616964"), 1)
-	got4 := Hash([]byte("6865206b6e656c7420746f2074686520666c6f6f7220616e642070756c6c6564206f757420612072696e6720616e642073616964"), 1)
+	got3 := Hash([]byte("6865206b6e656c7420746f207468652067726f756e6420616e642070756c6c6564206f757420612072696e6720616e642073616964"), 16)
+	got4 := Hash([]byte("6865206b6e656c7420746f2074686520666c6f6f7220616e642070756c6c6564206f757420612072696e6720616e642073616964"), 16)
 	result2 := !Equal(got3, got4)
 	t.Log(result2)
 	if !result2 {
@@ -31,8 +31,8 @@ func TestHash(t *testing.T) {
 		t.Fail()
 	}
 
-	got5 := Hash([]byte("6865206b6e656c7420746f207468652067726f756e6420616e642070756c6c6564206f757420612072696e6720616e642073616964"), 2) // increased tolerance
-	got6 := Hash([]byte("6865206b6e656c7420746f2074686520666c6f6f7220616e642070756c6c6564206f757420612072696e6720616e642073616964"), 2)   // increased tolerance
+	got5 := Hash([]byte("6865206b6e656c7420746f207468652067726f756e6420616e642070756c6c6564206f757420612072696e6720616e642073616964"), 8) // increased tolerance
+	got6 := Hash([]byte("6865206b6e656c7420746f2074686520666c6f6f7220616e642070756c6c6564206f757420612072696e6720616e642073616964"), 8)   // increased tolerance
 	result3 := Equal(got5, got6)
 	t.Log(result3)
 	if !result3 {
@@ -40,8 +40,8 @@ func TestHash(t *testing.T) {
 		t.Fail()
 	}
 
-	got7 := Hash([]byte("elephants like horses"), 1)
-	got8 := Hash([]byte("elephants are horses"), 1)
+	got7 := Hash([]byte("elephants like horses"), 16)
+	got8 := Hash([]byte("elephants are horses"), 16)
 	result4 := !Equal(got7, got8)
 	t.Log(result4)
 	if !result4 {
@@ -60,8 +60,8 @@ func TestHash(t *testing.T) {
 }
 
 func TestMarshal(t *testing.T) {
-	got11 := Hash([]byte("elephants are like horses"), 1).MarshalString()
-	result6 := got11 == "d7697570462f7562b83e81258de0f1e41832e98072e44c36ec8efec46786e24e:12"
+	got11 := Hash([]byte("elephants are like horses"), 16).MarshalString()
+	result6 := got11 == "045827d5d10a1300430e95683ed7b57b295aae163b789a24f246f33a446a57c6:3"
 	t.Log(result6)
 	if !result6 {
 		t.Error("result 6 is wrong.")
@@ -70,11 +70,11 @@ func TestMarshal(t *testing.T) {
 }
 
 func TestUnmarshal(t *testing.T) {
-	got12, err := UnmarshalString("d7697570462f7562b83e81258de0f1e41832e98072e44c36ec8efec46786e24e:12")
+	got12, err := UnmarshalString("045827d5d10a1300430e95683ed7b57b295aae163b789a24f246f33a446a57c6:3")
 	if err != nil {
 		t.Errorf("unexpected error getting result 7: %s", err.Error())
 	}
-	result7 := reflect.DeepEqual(*got12, *Hash([]byte("elephants are like horses"), 1))
+	result7 := reflect.DeepEqual(*got12, *Hash([]byte("elephants are like horses"), 16))
 	t.Log(result7)
 	if !result7 {
 		t.Error("result 7 is wrong.")
