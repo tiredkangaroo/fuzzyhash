@@ -1,9 +1,12 @@
 package fuzzyhash
 
 import (
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"math"
 	"slices"
 	"strconv"
@@ -31,25 +34,70 @@ func roughMedian[T int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | 
 	return T(numbers[int(math.Floor(float64(len(numbers))/2.0))])
 }
 
-// Hash takes in input bytes (k) and integer (s) to measure the fuzzyness.
-// The larger s is, the more fuzzy the hash will be.
-func Hash(k []byte, s int) *FuzzyHash {
-	kh := []uint8(hex.EncodeToString(k))
-	t := len(kh) / s
-	kha := roughMedian(kh)
-	padding := slices.Repeat([]uint8{kha}, len(kh)%t)
-	key := append(kh, padding...)
-	fuzzyHash := &FuzzyHash{T: t}
-	var uc []uint8
+// ExtractBytes takes in input bytes (k) and an integer (s) to extract
+// an s number of bytes from the input bytes.
+func ExtractBytes(k []byte, s int) ([]byte, error) {
+	if s == len(k) {
+		return k, nil
+	}
+	if s > len(k) {
+		return []byte{}, fmt.Errorf("s may not be larger than length of k")
+	}
+	kh := []uint8(hex.EncodeToString(k))              // encode []byte as hexadecimal
+	t := len(kh) / s                                  // get the step (how many bytes to one byte)
+	kha := roughMedian(kh)                            // calculate the rough median
+	padding := slices.Repeat([]uint8{kha}, len(kh)%t) // pad it so the step (padding is the rough median) can be used in a loop properly
+	key := append(kh, padding...)                     // add the padding
+	var uc []uint8                                    // uc are the extracted bytes
 	for i := range len(key) / t {
 		buffer := key[i*t : i*t+t]
-		s := roughMedian(buffer)
-		uc = append(uc, s)
+		s := roughMedian(buffer) // get the median of the current step
+		uc = append(uc, s)       // add the median as an extracted byte
 	}
-	hasher := sha256.New()
-	hasher.Write(uc)
-	fuzzyHash.C = hasher.Sum(nil)
-	return fuzzyHash
+	return uc, nil // return the extracted bytes
+}
+
+// HashWith takes in input bytes (k) and integer (s) to measure the fuzzyness.
+// The larger s is, the more fuzzy the hash will be. The hashing system used
+// will be h.
+func HashWith(h hash.Hash, k []byte, s int) (*FuzzyHash, error) {
+	output, err := ExtractBytes(k, s)
+	if err != nil {
+		return nil, err
+	}
+	fuzzyhash := new(FuzzyHash)
+	fuzzyhash.T = s
+	_, err = h.Write(output)
+	if err != nil {
+		return nil, err
+	}
+	fuzzyhash.C = h.Sum(nil)
+	return fuzzyhash, nil
+}
+
+func MustHash(f *FuzzyHash, e error) *FuzzyHash {
+	if e != nil {
+		panic(e)
+	}
+	return f
+}
+
+// HashSHA1 is equal to call to HashWith with the first parameter
+// being sha1.New()
+func HashSHA1(k []byte, s int) (*FuzzyHash, error) {
+	return HashWith(sha1.New(), k, s)
+}
+
+// Hash256 is equal to call to HashWith with the first parameter
+// being sha256.New()
+func Hash256(k []byte, s int) (*FuzzyHash, error) {
+	return HashWith(sha256.New(), k, s)
+}
+
+// Hash512 is equal to call to HashWith with the first parameter
+// being sha512.New()
+func Hash512(k []byte, s int) (*FuzzyHash, error) {
+	return HashWith(sha512.New(), k, s)
 }
 
 // String returns the output bytes in hexadecimal form.
